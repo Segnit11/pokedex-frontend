@@ -25,8 +25,6 @@ const PokemonDetails = ({ pokemonName }) => {
 
   console.log(pokemonDetails)
 
-  //console.log(pokemonDetails.name)
-
   if (!pokemonDetails) {
     return <div>Loading...</div>;
   }
