@@ -1,14 +1,3 @@
-// const searchPokemons = async(name) =>{
-//     try{
-//         const search = await fetch(`http://localhost:8080/api/pokemon/findByName?name=${name}`);
-//         if(!search.ok){
-//             throw new error("Could not find pokemon")
-//         }
-//     }catch(error){
-//         console.error('Error finding pokemon:', error);
-//     }
-// }
-// export default searchPokemons;
 const fetchPokemonData = async (currentPage, searchName, setPokemonData, setTotalPages) => {
     try {
         if (searchName) {
