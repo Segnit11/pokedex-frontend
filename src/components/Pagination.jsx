@@ -1,15 +1,33 @@
-import React from 'react';
-import Button from '@mui/material/Button'
-import { Box } from '@mui/material';
-const Pagination = ({ currentPage, totalPages, onPreviousPage, onNextPage }) => {
+"use client";
+import React from "react";
+import { Box, Button, Typography } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+
+const Pagination = ({ currentPage, totalPages, onPrevious, onNext }) => {
+  if (totalPages <= 1) return null;
   return (
-   
-      <Box sx={{display: 'flex', justifyContent:'space-between', marginTop:'50px', marginBottom:'25px', paddingX:'170px'}}>
-        <Button variant='outlined' onClick={onPreviousPage} disabled={currentPage === 0}>Previous</Button>
-        <p>Page {currentPage + 1} of {totalPages}</p>
-        <Button variant='outlined' onClick={onNextPage} disabled={currentPage === totalPages - 1}>Next</Button>
-      </Box>
-    
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 3, my: 5 }}>
+      <Button
+        variant="outlined"
+        startIcon={<ChevronLeftIcon />}
+        onClick={onPrevious}
+        disabled={currentPage === 0}
+      >
+        Previous
+      </Button>
+      <Typography variant="body2" color="text.secondary">
+        Page <strong>{currentPage + 1}</strong> of {totalPages}
+      </Typography>
+      <Button
+        variant="outlined"
+        endIcon={<ChevronRightIcon />}
+        onClick={onNext}
+        disabled={currentPage >= totalPages - 1}
+      >
+        Next
+      </Button>
+    </Box>
   );
 };
 

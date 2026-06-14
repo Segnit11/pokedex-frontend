@@ -1,7 +1,5 @@
-import React from 'react';
-export default function LoginPage(){
-    return(
-        <>
-        </>
-    );
+import { redirect } from "next/navigation";
+
+export default function RootPage() {
+  redirect("/pokemons");
 }

@@ -1,17 +1,17 @@
-import PokedexLogo from "@/components/PokedexLogo";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
 import PokemonGrid from "@/components/PokemonGrid";
-import Filters from "@/components/Filters";
+import CompareTray from "@/components/CompareTray";
 import Footer from "@/components/Footer";
-import Image from "next/image";
-import React from "react";
-import PokemonCard from "@/components/PokemonCard";
 
-export default function Home() {
-  return(
+export default function PokemonsPage() {
+  return (
     <>
-      <PokedexLogo/>
-      <PokemonGrid/>
-      <Footer/>
+      <Navbar />
+      <Hero />
+      <PokemonGrid />
+      <CompareTray />
+      <Footer />
     </>
-  )
+  );
 }

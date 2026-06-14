@@ -1,76 +1,122 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import PokemonCard from './PokemonCard';
-import Pagination from './Pagination';
-import fetchPokemonData from '@/services/fetchPokemonData';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Filters from './Filters';
-import {useUser} from '@clerk/nextjs'
-import AZFilter from './AZFilter';
+"use client";
+import React, { useCallback, useEffect, useState } from "react";
+import { Box, Grid, Typography, Skeleton, Card } from "@mui/material";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
+import PokemonCard from "./PokemonCard";
+import FiltersBar from "./FiltersBar";
+import Pagination from "./Pagination";
+import { fetchPokemonPage, fetchMetadata } from "@/lib/api";
+import { PAGE_SIZE } from "@/lib/config";
+
+const DEFAULT_FILTERS = { name: "", type: "", generation: "", sort: "id-asc" };
 
 const PokemonGrid = () => {
-  //to check wether user is authenticated
-  const {user, isloaded} = useUser();
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [page, setPage] = useState(0);
+  const [data, setData] = useState({ content: [], totalPages: 0, totalElements: 0 });
+  const [metadata, setMetadata] = useState({ types: [], generations: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // State for storing Pokémon data, current page, and total pages
-  const [pokemonData, setPokemonData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [searchName, setSearchName] = useState('');
-  const [sortOrder, setSortOrder] = useState('');
-
-  // Fetch Pokémon data when component mounts, currentPage changes, or searchName changes
+  // Load filter options once.
   useEffect(() => {
-    fetchPokemonData(currentPage, searchName, sortOrder, setPokemonData, setTotalPages);
-  }, [currentPage, searchName]);
+    fetchMetadata().then(setMetadata);
+  }, []);
 
-  // Function to handle going to the previous page
-  const handlePreviousPage = () => {
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 0));
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    const [sortBy, sortDir] = filters.sort.split("-");
+    try {
+      const res = await fetchPokemonPage({
+        name: filters.name,
+        type: filters.type,
+        generation: filters.generation,
+        sortBy,
+        sortDir,
+        page,
+        size: PAGE_SIZE,
+      });
+      setData(res);
+    } catch (e) {
+      setError(true);
+      setData({ content: [], totalPages: 0, totalElements: 0 });
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, page]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const updateFilters = (patch) => {
+    setPage(0);
+    setFilters((f) => ({ ...f, ...patch }));
   };
 
-  // Function to handle going to the next page
-  const handleNextPage = () => {
-    setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages - 1));
-  };
-
-
-  const handleSortChange = (newSortOrder) => {
-    setSortOrder(newSortOrder);
-    console.log(newSortOrder)
-  };
-  const handleSearch = async (name) => {
-    setSearchName(name);
-    setCurrentPage(0); // Reset to the first page when searching
+  const reset = () => {
+    setPage(0);
+    setFilters(DEFAULT_FILTERS);
   };
 
   return (
-    <div>
-      {/* <AZFilter onFilterChange={handleSortChange}/> */}
-      <Filters onSearch={handleSearch} />
-      <div style={{ display: 'flex', justifyContent: 'center'}}>
-        <Box sx={{width:'60%', display:'flex', justifyContent:'center'}}>
-          <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }} sx={{ width: '80%' }}>
-            {pokemonData.map((pokemon) => (
-              <Grid key={pokemon.id} item xs={12} sm={6} md={4} lg={3}>
-                  <PokemonCard pokemon={pokemon} />
-              </Grid>
-            ))}
-          </Grid>
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 4 }}>
+      <FiltersBar filters={filters} metadata={metadata} onChange={updateFilters} onReset={reset} />
+
+      {!loading && !error && (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mb: 2 }}>
+          {data.totalElements} Pokémon found
+        </Typography>
+      )}
+
+      {error && (
+        <Box sx={{ textAlign: "center", py: 8 }}>
+          <Typography variant="h6">Couldn’t reach the Pokédex API.</Typography>
+          <Typography color="text.secondary">
+            Make sure the backend is running and NEXT_PUBLIC_API_URL is set correctly.
+          </Typography>
         </Box>
-      </div>
-      <div>
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPreviousPage={handlePreviousPage}
-          onNextPage={handleNextPage}
-        />
-      </div>
-    </div>
+      )}
+
+      {!error && (
+        <Grid container spacing={3}>
+          {loading
+            ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                <Grid item xs={6} sm={4} md={3} key={i}>
+                  <Card sx={{ borderRadius: 4 }}>
+                    <Skeleton variant="rectangular" height={170} />
+                    <Box sx={{ p: 2 }}>
+                      <Skeleton width="60%" sx={{ mx: "auto" }} />
+                      <Skeleton width="40%" sx={{ mx: "auto" }} />
+                    </Box>
+                  </Card>
+                </Grid>
+              ))
+            : data.content.map((pokemon) => (
+                <Grid item xs={6} sm={4} md={3} key={pokemon.id}>
+                  <PokemonCard pokemon={pokemon} />
+                </Grid>
+              ))}
+        </Grid>
+      )}
+
+      {!loading && !error && data.content.length === 0 && (
+        <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+          <SearchOffIcon sx={{ fontSize: 64, opacity: 0.5 }} />
+          <Typography variant="h6">No Pokémon match your filters.</Typography>
+          <Typography>Try clearing the search or filters.</Typography>
+        </Box>
+      )}
+
+      <Pagination
+        currentPage={page}
+        totalPages={data.totalPages}
+        onPrevious={() => setPage((p) => Math.max(p - 1, 0))}
+        onNext={() => setPage((p) => Math.min(p + 1, data.totalPages - 1))}
+      />
+    </Box>
   );
 };
 
 export default PokemonGrid;
-
