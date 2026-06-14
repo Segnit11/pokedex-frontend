@@ -13,13 +13,35 @@ Browse, search, filter, compare and favorite 386 Pokémon. Backed by a
 - ❤️ **Favorites** saved per user (via the backend), with **Clerk** authentication
 - 🌙 **Dark mode**, loading skeletons, empty states, fully responsive
 
-## Getting started
+## Run locally
+
+This is the **frontend**. It needs the
+[Spring Boot + PostgreSQL backend](https://github.com/Segnit11/Backend_Pokedex)
+running too. Use **two terminals**.
+
+### 1. Backend (→ http://localhost:8081)
+
+Clone and start the backend repo — no local Java/Postgres needed, it all runs in
+Docker and auto-seeds 386 Pokémon on first boot:
+
+```bash
+git clone https://github.com/Segnit11/Backend_Pokedex.git
+cd Backend_Pokedex
+docker compose up --build     # API on http://localhost:8081
+```
+
+Verify: `curl http://localhost:8081/api/health` → `{"status":"UP"}`
+
+### 2. Frontend (this repo → http://localhost:3000)
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in the values
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local    # then fill in the values (see below)
+npm run dev                   # http://localhost:3000
 ```
+
+The bundled defaults already point `NEXT_PUBLIC_API_URL` at `http://localhost:8081`.
+Clerk auth is optional — leave its keys blank to run in public mode.
 
 ## Environment variables
 
